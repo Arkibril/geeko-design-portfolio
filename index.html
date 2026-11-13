@@ -162,7 +162,13 @@ body.intro header,body.intro #caption,body.intro #hint{opacity:0!important;point
   .brand{font-size:22px}
   .search input{width:min(78vw,300px)}
   .sugg{width:min(90vw,340px)}
-  .chips{flex-wrap:nowrap;overflow-x:auto;max-width:92vw;padding-bottom:2px}
+  .filters{gap:8px}
+  .search input{padding:6px 12px 6px 30px;font-size:11px}
+  .search kbd{display:none}
+  .chips{flex-wrap:nowrap;overflow-x:auto;max-width:calc(100vw - 32px);gap:5px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{padding:3px 8px;font-size:9.5px;flex:none}
+  .count,.reset{font-size:9.5px}
   .sep{display:none}
   #panel{top:auto;left:0;width:100%;height:56vh;padding:10px 16px 18px}
   .meta{flex-direction:column;align-items:flex-start;gap:10px}

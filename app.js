@@ -804,7 +804,7 @@ addEventListener('pointermove', e => {
   }
   if (downAt && e.pointerType !== 'mouse') {
     const dy = e.clientY - downAt.y, dx = e.clientX - downAt.x, t = performance.now(), d = MODE === 'shelf' ? dy + dx : dx;
-    if (MODE === 'shelf') target -= d * .06; else dTarget -= dx * .012;
+    if (MODE === 'shelf') target -= d * .12; else dTarget -= dx * .018;   // au doigt : l'étagère suit franchement
     const v = clamp(d / Math.max(8, t - (downAt.t || t - 16)), -4, 4);   // px/ms, pour l'élan au lâcher
     downAt = { x: e.clientX, y: e.clientY, t, v: downAt.moved ? downAt.v * .4 + v * .6 : v, moved: downAt.moved || Math.abs(dx) + Math.abs(dy) > 2 };
   }
@@ -838,7 +838,7 @@ addEventListener('pointerup', e => {
   if (e.target !== canvas || wasDrag) {
     if (STATE === 'browse' && wasDrag) {
       if (MODE === 'discs') { dTarget = Math.round(dTarget - flick * .9); renderDinfo(); }
-      else if (TOUCH) target = snapShelf(target - flick * 9);   // élan puis aimantation sur un boîtier
+      else if (TOUCH) target = snapShelf(target - flick * 14);   // élan puis aimantation sur un boîtier
     }
     return;
   }
@@ -986,7 +986,7 @@ function loop(now) {
 
   // étagère
   if (STATE === 'browse' && MODE === 'shelf' && drift && !reduce && !TOUCH) target += dt * 1.1;
-  scroll += (target - scroll) * (1 - Math.pow(.0009, dt));
+  scroll += (target - scroll) * (1 - Math.pow(TOUCH && downAt ? 1e-6 : .0009, dt));   // doigt posé : suivi direct
   if (STATE === 'browse' && MODE === 'shelf' && TOUCH) setHover(centerSlot());
   else if (STATE === 'browse' && MODE === 'shelf' && pointerIn && !downAt) {
     ray.setFromCamera(mouse, camera);
