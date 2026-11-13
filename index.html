@@ -165,7 +165,9 @@ body.intro header,body.intro #caption,body.intro #hint{opacity:0!important;point
   .filters{gap:8px}
   .search input{padding:6px 12px 6px 30px;font-size:11px}
   .search kbd{display:none}
-  .chips{flex-wrap:nowrap;overflow-x:auto;max-width:calc(100vw - 32px);gap:5px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  /* la barre de défilement (iOS l'affiche quoi qu'on fasse) est poussée sous le cadre visible puis rognée */
+  .chipsw{overflow:hidden;height:22px;max-width:calc(100vw - 32px)}
+  .chips{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:5px;padding-bottom:30px;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chip{padding:3px 8px;font-size:9.5px;flex:none}
   .count,.reset{font-size:9.5px}
@@ -220,7 +222,7 @@ body.intro header,body.intro #caption,body.intro #hint{opacity:0!important;point
       <kbd>/</kbd>
       <div class="sugg" id="sugg" role="listbox"></div>
     </div>
-    <div class="chips" id="types" aria-label="Filtrer par type"></div>
+    <div class="chipsw"><div class="chips" id="types" aria-label="Filtrer par type"></div></div>
     <span class="count" id="count"></span>
     <button class="reset" id="reset" hidden>Réinitialiser</button>
   </div>
