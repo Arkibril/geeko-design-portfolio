@@ -67,7 +67,7 @@ scene.add(camera);
 const CAM = { pos: new THREE.Vector3(), target: new THREE.Vector3() };
 function cameraBase() {
   const a = innerWidth / innerHeight;
-  if (a < .8) { CAM.pos.set(-80, 45, 60); CAM.target.set(2, 8.5, 0); }   // mobile : étagère plus basse, le boîtier sélectionné monte dans la zone libre
+  if (a < .8) { CAM.pos.set(-80, 45, 60); CAM.target.set(2, 6, 0); }   // mobile : étagère plus basse, le boîtier sélectionné monte dans la zone libre
   else { CAM.pos.set(-60, 30, 44); CAM.target.set(9, 2, 0); }
 }
 cameraBase();
@@ -830,7 +830,7 @@ canvas.addEventListener('pointerdown', e => {
   if (STATE === 'open') {
     if (ray.intersectObject(H_.disc, true).length) kind = 'disc';
     else if (ray.intersectObject(hero, true).length) kind = 'hero';
-  } else if (STATE === 'browse' && MODE === 'discs' && !TOUCH) {
+  } else if (STATE === 'browse' && MODE === 'discs') {   // au doigt : sur le disque = rotation, à côté = changer de disque
     const c = pool.find(h => h.userData.idx === Math.round(dTarget));
     if (c && ray.intersectObject(c, true).length) kind = 'pool';
   }
@@ -1030,7 +1030,7 @@ function loop(now) {
   discRig.visible = discVis > .005;
   dScroll += (dTarget - dScroll) * (1 - Math.pow(.004, dt));
   if (discRig.visible && active.length) {
-    const a = innerWidth / innerHeight, mob = a < .8, sp = mob ? 13.5 : 16, dz = mob ? -68 : -50, dy = mob ? .9 : -.6;
+    const a = innerWidth / innerHeight, mob = a < .8, sp = mob ? 13.5 : 16, dz = mob ? -60 : -50, dy = mob ? 1.8 : -.6;
     // disques bien de face et droits ; ils s'orientent vers le curseur
     discRig.position.set(0, -(1 - discVis) * 30, 0);
     discRig.rotation.set(0, 0, 0);

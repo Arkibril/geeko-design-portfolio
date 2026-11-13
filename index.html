@@ -65,7 +65,7 @@ header>*{pointer-events:auto}
 .search input{all:unset;width:260px;padding:8px 12px 8px 30px;border:1px solid var(--ink);border-radius:99px;background:rgba(255,255,255,.4);backdrop-filter:blur(6px);font-size:12px}
 .search input::placeholder{color:#777}
 .search input:focus{background:rgba(255,255,255,.75)}
-.search::before{content:"⌕";position:absolute;left:11px;top:50%;transform:translateY(-52%);font-size:15px}
+.search::before{content:"";position:absolute;left:11px;top:50%;width:13px;height:13px;transform:translateY(-50%);pointer-events:none;z-index:1;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23111' stroke-width='1.8'%3E%3Ccircle cx='6.5' cy='6.5' r='5'/%3E%3Cpath d='M10.2 10.2 15 15'/%3E%3C/svg%3E")}
 .search kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);font:inherit;font-size:10px;color:var(--mute);border:1px solid #999;border-radius:4px;padding:0 4px}
 .sugg{position:absolute;top:calc(100% + 6px);left:0;width:340px;background:rgba(245,245,243,.96);border:1px solid var(--ink);border-radius:12px;overflow:hidden;display:none;box-shadow:0 20px 40px -20px rgba(0,0,0,.35)}
 .sugg.on{display:block}
@@ -83,6 +83,7 @@ header>*{pointer-events:auto}
 .chip:focus-visible{outline:2px solid var(--accent)}
 .count{color:var(--mute);text-transform:uppercase;letter-spacing:.05em;font-size:10.5px}
 .reset{all:unset;cursor:pointer;text-decoration:underline;font-size:10.5px;text-transform:uppercase;color:var(--mute)}
+.reset[hidden]{display:none}
 .sep{width:1px;height:20px;background:rgba(0,0,0,.25)}
 
 /* shelf caption */
@@ -162,11 +163,21 @@ body.intro header,body.intro #caption,body.intro #hint{opacity:0!important;point
   .brand{font-size:22px}
   .search input{width:min(78vw,300px)}
   .sugg{width:min(90vw,340px)}
-  .filters{gap:8px}
-  .search input{padding:6px 12px 6px 30px;font-size:11px}
+  /* recherche + filtres sur une seule ligne : la recherche est une loupe qui s'ouvre au toucher */
+  .filters{flex-wrap:nowrap;gap:6px}
+  .search{flex:none}
+  .search input{box-sizing:border-box;width:26px;height:22px;padding:0 0 0 24px;font-size:16px;transition:width .35s var(--ease)}
+  .search::before{left:7px;width:12px;height:12px}
+  .search input::placeholder{color:transparent}
+  .search input:focus,.search input:not(:placeholder-shown){width:calc(100vw - 32px);padding-right:12px;background:#fff}
+  .search input:focus::placeholder{color:#777;font-size:11px}
   .search kbd{display:none}
   /* pas de défilement natif (sinon le navigateur affiche une barre) : glisser géré en JS */
-  .chipsw{max-width:calc(100vw - 32px)}
+  .chipsw{flex:1;min-width:0}
+  /* compteur et réinitialiser : en bas à gauche, à côté du titre */
+  .count{position:fixed;left:16px;bottom:24px}
+  .reset{position:fixed;left:16px;bottom:40px}
+  body.mode-discs .count{display:none}
   .chips{flex-wrap:nowrap;overflow:hidden;gap:5px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
   .chip{padding:3px 8px;font-size:9.5px;flex:none}
   .count,.reset{font-size:9.5px}
