@@ -1,5 +1,7 @@
 # Geeko Design — Portfolio CD 3D
 
+**▶ Voir le site : https://arkibril.github.io/geeko-design-portfolio/**
+
 Portfolio de graphiste pensé comme **le bac d'un disquaire**. Chaque projet est un CD : on fouille dans une étagère infinie, on sort un boîtier, on l'ouvre, et le design se découvre comme une pochette d'album. Les variantes de couleur d'un même projet deviennent les éditions d'un même disque.
 
 Code écrit à la main : **three.js + shaders GLSL + JavaScript pur**. Pas de framework, pas d'étape de build.
