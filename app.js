@@ -645,6 +645,18 @@ TYPES.forEach(t => {
   b.onclick = () => { F.type = t; [...typesEl.children].forEach(x => x.setAttribute('aria-pressed', x === b)); applyFilters(); };
   typesEl.appendChild(b);
 });
+/* filtres sur mobile : glisser horizontal fait main (aucun défilement natif = jamais de barre) */
+let chipDrag = null;
+typesEl.addEventListener('pointerdown', e => { chipDrag = { x: e.clientX, s: typesEl.scrollLeft, id: e.pointerId, moved: false }; });
+typesEl.addEventListener('pointermove', e => {
+  if (!chipDrag) return;
+  const dx = e.clientX - chipDrag.x;
+  if (!chipDrag.moved && Math.abs(dx) > 6) { chipDrag.moved = true; try { typesEl.setPointerCapture(chipDrag.id); } catch (_) {} }
+  if (chipDrag.moved) typesEl.scrollLeft = chipDrag.s - dx;
+});
+const chipEnd = () => { if (chipDrag && chipDrag.moved) { typesEl.dataset.dragged = '1'; setTimeout(() => delete typesEl.dataset.dragged, 0); } chipDrag = null; };
+addEventListener('pointerup', chipEnd); addEventListener('pointercancel', chipEnd);
+typesEl.addEventListener('click', e => { if (typesEl.dataset.dragged) { e.stopPropagation(); e.preventDefault(); } }, true);   // un glisser n'est pas un clic
 $('#reset').onclick = () => { F.q = ''; $('#q').value = ''; F.type = 'Tout'; [...typesEl.children].forEach((x, j) => x.setAttribute('aria-pressed', j === 0)); closeSugg(); applyFilters(); };
 const q = $('#q'), sugg = $('#sugg'); let sel = 0, results = [];
 function renderSugg() {

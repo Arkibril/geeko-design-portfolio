@@ -165,10 +165,9 @@ body.intro header,body.intro #caption,body.intro #hint{opacity:0!important;point
   .filters{gap:8px}
   .search input{padding:6px 12px 6px 30px;font-size:11px}
   .search kbd{display:none}
-  /* la barre de défilement (iOS l'affiche quoi qu'on fasse) est poussée sous le cadre visible puis rognée */
-  .chipsw{overflow:hidden;height:22px;max-width:calc(100vw - 32px)}
-  .chips{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:5px;padding-bottom:30px;scrollbar-width:none}
-  .chips::-webkit-scrollbar{display:none}
+  /* pas de défilement natif (sinon le navigateur affiche une barre) : glisser géré en JS */
+  .chipsw{max-width:calc(100vw - 32px)}
+  .chips{flex-wrap:nowrap;overflow:hidden;gap:5px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
   .chip{padding:3px 8px;font-size:9.5px;flex:none}
   .count,.reset{font-size:9.5px}
   .sep{display:none}
