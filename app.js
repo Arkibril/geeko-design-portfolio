@@ -830,9 +830,10 @@ canvas.addEventListener('pointerdown', e => {
   if (STATE === 'open') {
     if (ray.intersectObject(H_.disc, true).length) kind = 'disc';
     else if (ray.intersectObject(hero, true).length) kind = 'hero';
-  } else if (STATE === 'browse' && MODE === 'discs') {   // au doigt : sur le disque = rotation, à côté = changer de disque
+  } else if (STATE === 'browse' && MODE === 'discs') {
+    // souris : clic maintenu sur le disque central ; doigt : glisser n'importe où fait tourner le CD (pas de défilement)
     const c = pool.find(h => h.userData.idx === Math.round(dTarget));
-    if (c && ray.intersectObject(c, true).length) kind = 'pool';
+    if (c && (TOUCH || ray.intersectObject(c, true).length)) kind = 'pool';
   }
   if (kind) {
     drag = { kind, x: e.clientX, y: e.clientY, t: performance.now(), dist: 0, moved: false };
