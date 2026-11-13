@@ -167,7 +167,8 @@ body.intro header,body.intro #caption,body.intro #hint{opacity:0!important;point
   #panel{top:auto;left:0;width:100%;height:56vh;padding:10px 16px 18px}
   .meta{flex-direction:column;align-items:flex-start;gap:10px}
   #dinfo{top:auto;bottom:90px;width:auto;right:16px;left:16px}
-  #dinfo h2{font-size:34px}
+  #dinfo h2{font-size:34px;margin-bottom:10px}
+  #dinfo dt:nth-of-type(3),#dinfo dd:nth-of-type(3),#dinfo dt:nth-of-type(5),#dinfo dd:nth-of-type(5){display:none}
   #caption .title{font-size:44px}
   #hint{display:none}
   #tip{display:none}
@@ -202,7 +203,7 @@ body.intro header,body.intro #caption,body.intro #hint{opacity:0!important;point
             <label class="gm-col">Couleur du point <input type="color" id="gmColor"></label>
             <button id="gmReplay">Rejouer l'intro</button>
           </div>
-          <p class="gm-help">Clic sur la barre : ajouter · glisser un point : déplacer · double-clic sur un point : retirer</p>
+          <p class="gm-help">Clic sur la barre : ajouter · glisser un point : déplacer · double-clic (ou double-tap) sur un point : retirer</p>
         </div>
       </div>
     </div>

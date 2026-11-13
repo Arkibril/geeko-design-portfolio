@@ -39,6 +39,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const ease = { out: t => 1 - Math.pow(1 - t, 3), inOut: t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2, outBack: t => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2) };
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let TOUCH = matchMedia('(hover: none)').matches;   // écran tactile : pas de survol, le boîtier du milieu est sélectionné
 
 /* =========================================================
    Renderer / scène
@@ -66,7 +67,7 @@ scene.add(camera);
 const CAM = { pos: new THREE.Vector3(), target: new THREE.Vector3() };
 function cameraBase() {
   const a = innerWidth / innerHeight;
-  if (a < .8) { CAM.pos.set(-80, 40, 60); CAM.target.set(6, 2, 0); }
+  if (a < .8) { CAM.pos.set(-80, 45, 60); CAM.target.set(2, 8.5, 0); }   // mobile : étagère plus basse, le boîtier sélectionné monte dans la zone libre
   else { CAM.pos.set(-60, 30, 44); CAM.target.set(9, 2, 0); }
 }
 cameraBase();
@@ -387,6 +388,13 @@ function assignSlots(instant) {
 }
 let target = 0, scroll = 0, hovered = -1, drift = true;
 const slotPos = i => mod(i * SPACING - scroll + L / 2, L) - L / 2;
+/* tactile : le boîtier au centre de l'écran (x = CAM.target.x) fait office de survol */
+const snapShelf = t => Math.round((t + CAM.target.x) / SPACING) * SPACING - CAM.target.x;
+function centerSlot() {
+  let best = -1, d = 1e9;
+  for (const s of slots) { if (s.proj == null || s.pop > .2 || s.pending !== undefined) continue; const e = Math.abs(slotPos(s.i) - CAM.target.x); if (e < d) { d = e; best = s.i; } }
+  return best;
+}
 
 /* =========================================================
    Vue « Disques » (réf. A24) — rattachée à la caméra
@@ -691,7 +699,7 @@ function renderDinfo() {
    double-clic sur un point = retirer ; préréglages en haut
    ========================================================= */
 const gmEl = $('#gm'), gmBtn = $('#gmBtn'), gmBar = $('#gmBar'), gmNodes = $('#gmNodes'), gmColor = $('#gmColor'), gmPresets = $('#gmPresets');
-let gmSel = 0, gmThrT = 0;
+let gmSel = 0, gmThrT = 0, gmTap = { i: -1, t: 0 };
 function gmSave() { try { localStorage.setItem('geeko-gradient-map', JSON.stringify(GM)); } catch (_) {} }
 function gmRefreshThreshold() {
   thrCache.clear();
@@ -721,16 +729,18 @@ function gmRender() {
   GM.stops.forEach((s, i) => {
     const n = document.createElement('div'); n.className = 'gm-node' + (i === gmSel ? ' sel' : '');
     n.style.left = `${s.p * 100}%`; n.style.setProperty('--c', s.c); n.innerHTML = '<i></i>';
-    n.title = 'Glisser pour déplacer · double-clic pour retirer';
+    n.title = 'Glisser pour déplacer · double-clic (ou double-tap) pour retirer';
     n.addEventListener('pointerdown', e => {
-      e.preventDefault(); e.stopPropagation(); gmSel = i; gmColor.value = s.c;
+      e.preventDefault(); e.stopPropagation();
+      const tt = performance.now();
+      if (gmTap.i === i && tt - gmTap.t < 380) { gmTap.i = -1; if (GM.stops.length > 2) { GM.stops.splice(i, 1); gmSel = Math.max(0, i - 1); gmChanged(); } return; }
+      gmTap = { i, t: tt }; gmSel = i; gmColor.value = s.c;
       [...gmNodes.children].forEach((x, j) => x.classList.toggle('sel', j === i));
       n.setPointerCapture(e.pointerId);
       const move = ev => { s.p = gmPosFromEvent(ev); n.style.left = `${s.p * 100}%`; gmChanged(false, true); };
       const up = () => { n.removeEventListener('pointermove', move); n.removeEventListener('pointerup', up); };
       n.addEventListener('pointermove', move); n.addEventListener('pointerup', up);
     });
-    n.addEventListener('dblclick', e => { e.stopPropagation(); if (GM.stops.length > 2) { GM.stops.splice(i, 1); gmSel = Math.max(0, i - 1); gmChanged(); } });
     gmNodes.appendChild(n);
   });
   if (GM.stops[gmSel]) gmColor.value = GM.stops[gmSel].c;
@@ -773,6 +783,7 @@ function setMode(m) {
   const now = performance.now();
   slots.forEach(s => { s.delay = now + Math.abs(slotPos(s.i)) * 7; });
   setHover(-1); renderDinfo();
+  if (TOUCH && m === 'shelf') target = snapShelf(target);
 }
 
 /* =========================================================
@@ -781,7 +792,8 @@ function setMode(m) {
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), mouse = new THREE.Vector2(), mouseS = new THREE.Vector2();
 let pointerIn = false, downAt = null;
 addEventListener('pointermove', e => {
-  ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); mouse.copy(ndc); pointerIn = e.target === canvas;
+  ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); pointerIn = e.target === canvas;
+  if (e.pointerType === 'mouse') mouse.copy(ndc);
   if (drag) {
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y, t = performance.now(), dts = Math.max(.008, (t - drag.t) / 1000);
     drag.x = e.clientX; drag.y = e.clientY; drag.t = t; drag.dist += Math.abs(dx) + Math.abs(dy);
@@ -790,17 +802,23 @@ addEventListener('pointermove', e => {
     r.x += ax; r.y += ay; r.vx = clamp(ax / dts, -7, 7); r.vy = clamp(ay / dts, -7, 7);
     return;
   }
-  if (downAt && e.pointerType !== 'mouse') { const dy = e.clientY - downAt.y, dx = e.clientX - downAt.x; if (MODE === 'shelf') target -= (dy + dx) * .06; else dTarget -= dx * .012; downAt = { x: e.clientX, y: e.clientY, moved: true }; }
+  if (downAt && e.pointerType !== 'mouse') {
+    const dy = e.clientY - downAt.y, dx = e.clientX - downAt.x, t = performance.now(), d = MODE === 'shelf' ? dy + dx : dx;
+    if (MODE === 'shelf') target -= d * .06; else dTarget -= dx * .012;
+    const v = clamp(d / Math.max(8, t - (downAt.t || t - 16)), -4, 4);   // px/ms, pour l'élan au lâcher
+    downAt = { x: e.clientX, y: e.clientY, t, v: downAt.moved ? downAt.v * .4 + v * .6 : v, moved: downAt.moved || Math.abs(dx) + Math.abs(dy) > 2 };
+  }
 });
-canvas.addEventListener('pointerleave', () => { pointerIn = false; if (STATE === 'browse') setHover(-1); });
+canvas.addEventListener('pointerleave', () => { pointerIn = false; if (STATE === 'browse' && !TOUCH) setHover(-1); });
+addEventListener('pointerdown', e => { TOUCH = e.pointerType !== 'mouse'; }, true);
 canvas.addEventListener('pointerdown', e => {
-  downAt = { x: e.clientX, y: e.clientY, moved: false }; ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  downAt = { x: e.clientX, y: e.clientY, t: performance.now(), v: 0, moved: false }; ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   // clic maintenu sur le boîtier ouvert, son disque, ou le disque central : rotation 360°
   ray.setFromCamera(ndc, camera); let kind = null;
   if (STATE === 'open') {
     if (ray.intersectObject(H_.disc, true).length) kind = 'disc';
     else if (ray.intersectObject(hero, true).length) kind = 'hero';
-  } else if (STATE === 'browse' && MODE === 'discs') {
+  } else if (STATE === 'browse' && MODE === 'discs' && !TOUCH) {
     const c = pool.find(h => h.userData.idx === Math.round(dTarget));
     if (c && ray.intersectObject(c, true).length) kind = 'pool';
   }
@@ -816,8 +834,14 @@ addEventListener('pointerup', e => {
     if (performance.now() - d.t > 90) { ROT[d.kind].vx = ROT[d.kind].vy = 0; }   // lâché à l'arrêt : pas d'élan
     if (d.moved) return;                         // c'était une rotation, pas un clic
   }
-  const wasDrag = downAt && downAt.moved; downAt = null;
-  if (e.target !== canvas || wasDrag) { if (MODE === 'discs' && wasDrag) { dTarget = Math.round(dTarget); renderDinfo(); } return; }
+  const wasDrag = downAt && downAt.moved, flick = wasDrag ? downAt.v : 0; downAt = null;
+  if (e.target !== canvas || wasDrag) {
+    if (STATE === 'browse' && wasDrag) {
+      if (MODE === 'discs') { dTarget = Math.round(dTarget - flick * .9); renderDinfo(); }
+      else if (TOUCH) target = snapShelf(target - flick * 9);   // élan puis aimantation sur un boîtier
+    }
+    return;
+  }
   ray.setFromCamera(ndc, camera);
   if (STATE === 'open') {
     const h = ray.intersectObject(H_.disc, true)[0];
@@ -826,8 +850,15 @@ addEventListener('pointerup', e => {
   }
   if (STATE !== 'browse') return;
   if (MODE === 'shelf') {
+    // le boîtier sélectionné est soulevé : on teste d'abord son vrai volume (la zone de clic du slot reste en bas)
+    if (hovered >= 0 && slots[hovered].proj != null && ray.intersectObject(slots[hovered].mesh, false).length) { const s = slots[hovered]; openProject(s.proj, s); return; }
     const h = ray.intersectObjects(slots.filter(s => s.mesh.visible && s.pop < .2).map(s => s.proxy), false)[0];
-    if (h) { const s = slots[h.object.userData.slot]; openProject(s.proj, s); }
+    if (h) {
+      const s = slots[h.object.userData.slot];
+      // tactile : toucher un boîtier l'amène au centre ; toucher celui du centre l'ouvre
+      if (TOUCH && s.i !== hovered) target = snapShelf(scroll + slotPos(s.i) - CAM.target.x);
+      else openProject(s.proj, s);
+    }
   } else {
     const h = ray.intersectObjects(pool.map(p => p.userData.front), false)[0];
     if (h) {
@@ -861,6 +892,7 @@ addEventListener('keydown', e => {
 });
 addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); cameraBase();
+  if (TOUCH) target = snapShelf(target);
 });
 
 /* =========================================================
@@ -942,6 +974,7 @@ const right = new THREE.Vector3(), up = new THREE.Vector3();
 function loop(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   runTweens(now);
+  if (TOUCH) mouse.set(Math.sin(now * .00035) * .22, Math.sin(now * .00027) * .14);   // pas de curseur : léger balancement
   mouseS.lerp(mouse, 1 - Math.pow(.002, dt));
 
   // caméra : parallaxe souris dans un vrai espace 3D
@@ -952,9 +985,10 @@ function loop(now) {
   tilt.rotation.set(-mouseS.y * .16, mouseS.x * .22, 0);
 
   // étagère
-  if (STATE === 'browse' && MODE === 'shelf' && drift && !reduce) target += dt * 1.1;
+  if (STATE === 'browse' && MODE === 'shelf' && drift && !reduce && !TOUCH) target += dt * 1.1;
   scroll += (target - scroll) * (1 - Math.pow(.0009, dt));
-  if (STATE === 'browse' && MODE === 'shelf' && pointerIn && !downAt) {
+  if (STATE === 'browse' && MODE === 'shelf' && TOUCH) setHover(centerSlot());
+  else if (STATE === 'browse' && MODE === 'shelf' && pointerIn && !downAt) {
     ray.setFromCamera(mouse, camera);
     const h = ray.intersectObjects(slots.filter(s => s.mesh.visible && s.pop < .2).map(s => s.proxy), false)[0];
     setHover(h ? h.object.userData.slot : -1);
@@ -984,7 +1018,7 @@ function loop(now) {
   discRig.visible = discVis > .005;
   dScroll += (dTarget - dScroll) * (1 - Math.pow(.004, dt));
   if (discRig.visible && active.length) {
-    const a = innerWidth / innerHeight, sp = a < .8 ? 13.5 : 16, dz = a < .8 ? -62 : -50;
+    const a = innerWidth / innerHeight, mob = a < .8, sp = mob ? 13.5 : 16, dz = mob ? -68 : -50, dy = mob ? .9 : -.6;
     // disques bien de face et droits ; ils s'orientent vers le curseur
     discRig.position.set(0, -(1 - discVis) * 30, 0);
     discRig.rotation.set(0, 0, 0);
@@ -996,7 +1030,7 @@ function loop(now) {
       if (h.userData.assigned !== keyA) { h.userData.front.material = discMaterial(p, 0, FX_THR); h.userData.assigned = keyA; }
       const ao = Math.abs(o), follow = ao < .5 ? 1 : .55;
       h.visible = ao < 4.2;
-      h.position.set(o * sp, -.6, dz - ao * 7);
+      h.position.set(o * sp, dy, dz - ao * 7);
       h.rotation.set(-mouseS.y * .42 * follow, mouseS.x * .55 * follow - o * .1, 0);
       h.scale.setScalar(1 - Math.min(ao, 3) * .06);
       // rotation 360° à la souris (disque central uniquement)
@@ -1049,6 +1083,7 @@ function loop(now) {
   buildShelf();
   applyFilters(); setCaption(0); renderDinfo();
   pool.forEach(h => h.userData.assigned = null);
+  if (TOUCH) target = scroll = snapShelf(0);   // tactile : un boîtier pile au centre dès le départ
   slots.forEach(s => { s.delay = performance.now() + 250 + Math.abs(slotPos(s.i)) * 14; });
   if (intro.on) { introResize(); intro.t0 = performance.now(); } else document.body.classList.remove('intro');
   renderer.setAnimationLoop(loop);
