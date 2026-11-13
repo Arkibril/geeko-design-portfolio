@@ -1,0 +1,42 @@
+GEEKO DESIGN — Portfolio CD 3D (three.js r170, aucune dépendance externe sauf Google Fonts)
+
+LANCER EN LOCAL
+  Les modules JS ne marchent pas en double-cliquant index.html : il faut un petit serveur.
+  Dans ce dossier :  python3 -m http.server 8000   puis ouvrir http://localhost:8000
+
+FICHIERS
+  index.html   interface HTML (en-tête, recherche, filtres, panneau projet)
+  app.js       scène 3D : étagère infinie, boîtiers, disques, ouverture, recherche/filtres
+  data.js      liste des projets et variantes (images dans img/)
+  lib/         three.js + RoomEnvironment + RoundedBoxGeometry
+  img/         <projet>-<n>.jpg = design complet, <projet>-<n>-c.jpg = pochette carrée 600 px
+
+AJOUTER UN PROJET
+  1. Mettre les images dans img/ (pochette carrée 600x600 + design complet ~1500 px)
+  2. Ajouter l'entrée dans data.js (id, name, kind, variants[{full, cover, color, label}])
+  3. Ajouter son type / mots-clés / couleurs dans META en haut de app.js
+
+RÉGLAGES RAPIDES (haut de app.js)
+  SPACING (écart entre boîtiers), FAN (rotation vers la caméra), COUNT (nombre de boîtiers),
+  LIFT (hauteur au survol), CAM.pos / CAM.target dans cameraBase() (angle de vue)
+
+DIRECTION ARTISTIQUE
+  Concept      Le bac d'un disquaire : chaque projet est un CD qu'on sort de l'étagère infinie,
+               qu'on ouvre, et dont le design se découvre comme une pochette d'album.
+               Les variantes de couleur d'un projet = les éditions d'un même disque.
+  Objet        Boîtier en vraie 3D aux proportions réelles (142 x 125 x 10,4 mm) : livret 12 cm
+               tenu par ses languettes, nervures de charnière, jaquette qui dépasse sur les tranches,
+               plateau noir à moyeu à dents, disque avec centre transparent, bande miroir et étiquette.
+  Image        Threshold + gradient map (façon Photoshop) : deux tons, noir et rouge sur l'étagère,
+               teinte de la variante + papier quand un projet est ouvert. Habillage, jamais cache :
+               couleur d'origine au survol, design complet toujours affiché intact à droite.
+  Palette      Fond gris « studio photo » neutre avec léger grain.
+  Typo         Anton (titres, esprit affiche) · IBM Plex Mono (infos techniques, dos de jaquette)
+               · Instrument Serif (contrepoint éditorial, vue Disques).
+  Mouvement    Caméra et disques suivent la souris. Ouverture en 3 temps : le boîtier sort et vient
+               vers nous, il s'ouvre, il se range à gauche et le design apparaît à droite.
+               La fermeture rejoue la même animation à l'envers (on sait d'où vient l'objet).
+  Navigation   Boîtiers = bac de disquaire, dense et tactile, pour fouiller.
+               Disques  = carrousel éditorial (sites de studios de cinéma), fiche détaillée par projet.
+  Recherche    Ignore majuscules, accents et ponctuation, tolère les fautes de frappe : jamais de
+               « aucun résultat ». Filtres par type (poster, motif, portrait...).
