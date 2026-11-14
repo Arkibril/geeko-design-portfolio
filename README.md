@@ -35,6 +35,12 @@ La signature visuelle, reprise de Photoshop. En mode **Threshold**, les pochette
 ### Recherche
 Insensible aux majuscules et aux accents, avec suggestions et filtres par type (poster, motif, portrait…).
 
+### Sur téléphone
+Pas de survol au doigt, donc :
+- **Boîtiers** : le boîtier au centre de l'écran est sélectionné ; glisser fait défiler l'étagère, qui s'arrête pile sur un boîtier ; toucher un boîtier l'amène au centre, toucher celui du centre l'ouvre.
+- **Disques** : glisser fait tourner le CD à 360° ; flèches ou toucher un disque voisin pour changer ; toucher le disque central ouvre le projet.
+- La recherche se replie en loupe sur la ligne des filtres.
+
 ---
 
 ## Éditeur de gradient map
